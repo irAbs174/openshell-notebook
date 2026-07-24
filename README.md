@@ -1,49 +1,27 @@
-# Modern AI Agent Isolation with NVIDIA OpenShell: Complete Architecture & Step-by-Step Hands-On Notebook
+# Modern AI Agent Isolation with NVIDIA OpenShell
 
-**NVIDIA OpenShell** is an open-source, policy-driven runtime designed specifically for autonomous, self-evolving AI agents. Unlike traditional container runtimes that isolate generic workloads, OpenShell provides **out-of-process, zero-trust environmental guardrails**.
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/irAbs174/openshell-notebook/blob/main/English.ipynb)
 
-An AI agent running inside an OpenShell sandbox can self-evolve, write new Python scripts mid-task, and install tools—yet it remains completely incapable of exfiltrating credentials, traversing unauthorized filesystem paths, or making unapproved outbound network requests.
+**NVIDIA OpenShell** is an open‑source, policy‑driven runtime designed to securely isolate autonomous, self‑evolving AI agents. This repository provides a **complete step‑by‑step Jupyter notebook** that guides you from zero to running an isolated AI agent with custom declarative security policies.
+
+> 🇬🇧 **English** · 🇷🇺 **Русский** · 🇮🇷 **فارسی**
 
 ---
 
-## 1. Deep-Dive Architecture & Core Concepts
+## 📖 Overview
 
-OpenShell adopts a security model analogous to a modern web browser's tab sandbox:
+OpenShell moves security controls **outside** the agent’s process and context window. Even if an attacker injects a malicious prompt, the kernel and OpenShell gateway enforce **zero‑trust** restrictions on filesystem access, network egress, and system calls.
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                             HOST ENVIRONMENT                                │
-│                                                                             │
-│  ┌───────────────────────┐             ┌─────────────────────────────────┐  │
-│  │     OpenShell CLI     │             │        openshell-gateway        │  │
-│  │  (`openshell sandbox`)│             │   (gRPC / HTTP Server :17670)   │  │
-│  └───────────┬───────────┘             └────────────────┬────────────────┘  │
-│              │                                          │                   │
-│              └──────────────────┐  ┌────────────────────┘                   │
-│                                 ▼  ▼                                        │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │                    SANDBOX EXECUTION ENVIRONMENT                      │  │
-│  │  ┌─────────────────────────────────────────────────────────────────┐  │  │
-│  │  │                        Agent Harness                            │  │  │
-│  │  │                 (Claude Code, Codex, Custom)                    │  │  │
-│  │  └──────────────────────────────┬──────────────────────────────────┘  │  │
-│  │                                 │ (Executes Commands)                 │  │
-│  │                                 ▼                                     │  │
-│  │  ┌─────────────────────────────────────────────────────────────────┐  │  │
-│  │  │                       OUT-OF-PROCESS POLICY                     │  │  │
-│  │  ├─────────────────────────────────────────────────────────────────┤  │  │
-│  │  │ 1. Filesystem Layer : Linux Landlock Sandboxing                 │  │  │
-│  │  │ 2. Network Layer    : L7 Proxy Filtering (Host, API, Egress)    │  │  │
-│  │  │ 3. Privacy Router   : Zero-Trust LLM Credential Swapping        │  │  │
-│  │  └─────────────────────────────────────────────────────────────────┘  │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │  │
-└─────────────────────────────────────────────────────────────────────────────┘
+This notebook demonstrates:
+- Environment diagnostics and verification
+- Starting the `openshell‑gateway` daemon
+- Creating an isolated sandbox
+- Applying dynamic YAML policies (filesystem, L7 network, process execution)
+- Testing policy enforcement (blocked POST requests, blocked egress domains)
+- Auditing logs and cleaning up resources
+- Advanced patterns:
+  - OIDC/JWT authentication for multi‑tenant production
+  - Multi‑stage agent pipelines (generation vs. execution)
+  - Prometheus metrics integration
 
-```
-
-### Key Architectural Pillars
-
-1. **Out-of-Process Enforcement**: Security controls live *outside* the agent's context window and process boundary. Even if an attacker executes a successful prompt injection against the agent, the kernel and OpenShell gateway refuse prohibited syscalls and network routes.
-2. **Linux Landlock Filesystem Isolation**: Enforces granular directory-level read/write rules at the Linux kernel level.
-3. **L7 Proxy & Network Filtering**: Outbound HTTP/HTTPS requests pass through a transparent policy proxy. Unapproved endpoints are immediately blocked with `403` status codes.
-4. **Privacy Router (Credential Isolation)**: Keeps LLM provider API keys outside the sandbox entirely. The agent directs local inference requests to the internal route, and OpenShell swaps in authorized backend API credentials in-flight.
+---
